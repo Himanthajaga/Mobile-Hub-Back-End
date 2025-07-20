@@ -3,6 +3,8 @@ import productRoutes from "./routes/product-routes";
 import authRoutes from "./routes/auth.routes";
 import cors from "cors";
 import {authenticateToken} from "./middleware/auth.middleware";
+import categoryRoutes from "./routes/category.routes";
+import path from "path";
 
 // 1. Initialize the express app
 const app: Express = express();
@@ -27,9 +29,12 @@ const corsOptions = {
     }
 };
 app.use(cors(corsOptions)); // Enable/Allow CORS according to defined options
-
+// Serve static files from the uploads folder
+app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRoutes);
 app.use("/api/products", authenticateToken, productRoutes);
+app.use("/api/categories", authenticateToken,categoryRoutes); // Assuming categories are managed in the same routes
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Expert the app to use outside (in index.ts)
 export default app;

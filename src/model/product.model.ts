@@ -25,6 +25,14 @@ const ProductModel = new mongoose.Schema(
         "image": {
             required: true,
             type: String
+        },
+        "description": {
+            type: String
+
+        },
+        "category": {
+            type: String,
+            required: true
         }
     }
 );

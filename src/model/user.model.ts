@@ -1,6 +1,6 @@
-export interface User{
+export interface User {
     id: number;
     username: string;
-    password: string; // In a real application, store hashed passwords
+    password: string;
     role: string;
 }
