@@ -6,7 +6,7 @@ const ProductModel = new mongoose.Schema(
             // NO Sql(Mongo Db)require = true, sql not null
             required: true,//like not null
             // type: String, // No Sql(Mongo Db) type is not String, sql varchar
-            type: Number,
+            type: String,
             unique: true,//unique key constraint
             index: true//for better performance
         },

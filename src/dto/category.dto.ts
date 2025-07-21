@@ -1,5 +1,4 @@
-import {Types} from "mongoose";
-import UUID = module
+
 
 export interface CategoryDto {
     id: string;

@@ -21,7 +21,22 @@ const storage = multer.diskStorage({
     },
 });
 
-export const upload = multer({ storage });
+// File type validation and size limit
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        console.error("Invalid file type:", file.mimetype);
+        cb(new Error("Invalid file type. Only JPEG, PNG, and GIF are allowed."));
+    }
+};
+
+export const upload = multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 5MB file size limit
+    fileFilter,
+});
 
 // Helper function to generate the file URL
 export const getFileUrl = (req: Request, filename: string): string => {
