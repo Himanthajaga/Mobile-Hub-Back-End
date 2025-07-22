@@ -1,13 +1,11 @@
 import { Request, Response } from 'express';
 import * as productService from '../services/product.service';
-import ProductModel from "../model/product.model";
-import mongoose from "mongoose";
-import { validate as isUUID } from 'uuid';
-import validator from 'validator';
+
 export const getAllProducts = async (req:Request, res:Response) => {
 //     ctrl+alt+T to wrap in try catch
     try{
         const products = await productService.getAllProducts();
+        console.log("Retrieved products:", products);
         res.status(200).json(products);
     }catch(error) {
         console.log('Error retrieving products:', error);

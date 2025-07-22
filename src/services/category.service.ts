@@ -75,3 +75,12 @@ export const generateUniqueId = async (): Promise<string> => {
 
     return uniqueId;
 };
+export const deleteAllCategories = async (): Promise<void> => {
+    try {
+        const result = await Category.deleteMany({});
+        console.log(`Deleted ${result.deletedCount} categories from the database.`);
+    } catch (error) {
+        console.error("Error deleting all categories:", error);
+        throw error;
+    }
+};

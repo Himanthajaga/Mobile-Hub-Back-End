@@ -6,14 +6,26 @@ import {authenticateToken} from "./middleware/auth.middleware";
 import categoryRoutes from "./routes/category.routes";
 import path from "path";
 import cloudinaryRoutes from "./routes/cloudinary.routes";
-
+import paymentRoutes from "./routes/payment.routes";
+import helmet from "helmet";
 // 1. Initialize the express app
 const app: Express = express();
-
+app.use(
+    helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "https://www.payhere.lk", "'unsafe-inline'"],
+                connectSrc: ["'self'", "https://www.payhere.lk"],
+                frameSrc: ["'self'", "https://www.payhere.lk"],
+            },
+        },
+    })
+);
 // 2. Define Middlewares
 
 // 2.1 Instruct to parse the request payload data to be converted to JSON format
-app.use(express.json());
+// app.use(express.json());
 // app.use(cors()); // Enable/Allow CORS here
 const allowedOrigins = [
     "http://localhost:5173"
@@ -41,6 +53,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", authenticateToken, productRoutes);
 app.use("/api/categories", authenticateToken,categoryRoutes); // Assuming categories are managed in the same routes
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use("/api/payments",authenticateToken,paymentRoutes);
+app.use("/api/create-payment-intent",authenticateToken,paymentRoutes);
+
 // Add the Cloudinary routes
 app.use("/api/cloudinary", cloudinaryRoutes);
 app.use(express.json());

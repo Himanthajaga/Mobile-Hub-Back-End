@@ -40,7 +40,7 @@ export const authenticateUser = (username: string, password: string) => {
         id: existingUser.id,
         username: existingUser.username,
         role: existingUser.role
-    }, JWT_SECRET, {expiresIn: "5m"});
+    }, JWT_SECRET, {expiresIn: "10m"});
 
     const refreshToken = jwt.sign({
         username: existingUser.username
