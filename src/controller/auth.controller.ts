@@ -31,4 +31,17 @@ export const registerUser = async (req: Request, res: Response) => {
         }
     }
 };
-    // res.status(201).json({messag
+
+export const updateUser = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { email,username, role,image,oldPassword,newPassword } = req.body;
+
+    try {
+        console.log("Request body for updateUser:", req.body);
+        console.log("Updating user with email:", email);
+        const updatedUser = await authService.updateUser(id,email,username,role,image,oldPassword,newPassword);
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        res.status(400).json({ error: error instanceof Error ? error.message : "An unknown error occurred" });
+    }
+}

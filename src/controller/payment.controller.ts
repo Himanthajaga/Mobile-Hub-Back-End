@@ -8,6 +8,7 @@ const stripe = new Stripe("sk_test_51R6ZgFKiBxldEfFSDQhuZZlyZufTUH4ua3pqx4P8XTx7
 
 export const createPaymentIntent = async (req: Request, res: Response) => {
     try {
+        console.log("Request received at createPaymentIntent endpoint", req.body);
         const { amount, currency, paymentId, paymentMethod, status, transactionId, userId, createdAt } = req.body;
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({ error: "Invalid User ID format" });

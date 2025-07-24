@@ -69,3 +69,56 @@ export const authenticateUser = async (username: string, password: string) => {
         throw new Error(error instanceof Error ? error.message : "An unknown error occurred");
     }
 };
+export async function updateUser(
+    id?:string,
+    email?: string,
+    username?: string,
+    role?: string,
+    image?: string,
+    oldPassword?: string,
+    newPassword?: string
+) {
+    try {
+        console.log("Role received:", role);
+        // Case-insensitive email query
+        const existingUser = await User.findById(id).select("username role email image password");
+        if (!existingUser) {
+            throw new Error("User not found");
+        }
+
+        // Check if old password is provided and matches
+        if (oldPassword && newPassword) {
+            const isPasswordValid = bcrypt.compareSync(oldPassword, existingUser.password);
+            if (!isPasswordValid) {
+                throw new Error("Old password is incorrect");
+            }
+
+            // Hash the new password
+            const hashedNewPassword = bcrypt.hashSync(newPassword, 10);
+            existingUser.password = hashedNewPassword;
+        }
+
+        // Update other fields if providedif (email) existingUser.email = email;
+        if (email) existingUser.email = email;
+        if (username) existingUser.username = username;
+        if (role && (role === "admin" || role === "customer")) {
+            existingUser.role = role;
+        } else if (role) {
+            throw new Error("Invalid role value. Role must be 'admin' or 'customer'.");
+        }
+        if (image) existingUser.image = image;
+
+        // Save the updated user
+        await existingUser.save();
+
+        return {
+            userId: existingUser._id,
+            username: existingUser.username,
+            role: existingUser.role,
+            email: existingUser.email,
+            image: existingUser.image,
+        };
+    } catch (error) {
+        throw new Error(error instanceof Error ? error.message : "An unknown error occurred");
+    }
+}
