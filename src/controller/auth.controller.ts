@@ -1,12 +1,34 @@
 import {Request, Response} from "express";
 import * as authService from '../services/auth.service';
-export const authenticateUser = (req: Request, res: Response) => {
-    const {username, password} = req.body;
-    const authTokens = authService.authenticateUser(username, password);
+export const authenticateUser = async (req: Request, res: Response) => {
+    const { username, password } = req.body;
 
-    if (!authTokens) {
-        res.status(401).json({error: "Invalid credentials"});
-        return;
+    try {
+        const authTokens = await authService.authenticateUser(username, password);
+
+        if (!authTokens) {
+            res.status(401).json({ error: "Invalid credentials" });
+            return;
+        }
+
+        res.status(200).json(authTokens);
+    } catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : "An unknown error occurred" });
     }
-    res.json(authTokens);
-}
+};
+export const registerUser = async (req: Request, res: Response) => {
+    const {username, password, role, email, image} = req.body;
+
+    try {
+        console.log("Registering user:", req.body);
+        const result = await authService.registerUser(username, password, role, email, image);
+        res.status(201).json(result);
+    } catch (error) {
+        if (error instanceof Error) {
+            res.status(400).json({error: error.message});
+        } else {
+            res.status(400).json({error: "An unknown error occurred"});
+        }
+    }
+};
+    // res.status(201).json({messag

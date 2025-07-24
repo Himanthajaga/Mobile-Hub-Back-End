@@ -50,6 +50,7 @@ app.use(cors(corsOptions)); // Enable/Allow CORS according to defined options
 // Serve static files from the uploads folder
 // app.use("/uploads", express.static("uploads"));
 app.use("/api/auth", authRoutes);
+app.use("/api/auth/register", authRoutes); // Register route
 app.use("/api/products", authenticateToken, productRoutes);
 app.use("/api/categories", authenticateToken,categoryRoutes); // Assuming categories are managed in the same routes
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
