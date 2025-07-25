@@ -107,6 +107,7 @@ console.log("Toggling user status for ID:", id);
             `<p>Your account has been <strong>${newStatus}</strong>.</p>`
         );
 
+
         if (!updatedUser) {
             return res.status(500).json({ error: "Failed to update user status" });
         }
@@ -114,5 +115,27 @@ console.log("Toggling user status for ID:", id);
         res.status(200).json({ message: "User status updated successfully", status: updatedUser.status });
     } catch (error) {
         res.status(500).json({ error: error instanceof Error ? error.message : "An unknown error occurred" });
+    }
+};
+// Send OTP
+export const sendOtp = async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    try {
+        await authService.sendOtp(email);
+        res.status(200).json({ message: "OTP sent to email" });
+    } catch (error) {
+        res.status(500).json({ message: error instanceof Error ? error.message : "Error sending OTP" });
+    }
+};
+
+export const resetPasswordWithOtp = async (req: Request, res: Response) => {
+    const { email, otp, newPassword } = req.body;
+
+    try {
+        await authService.resetPasswordWithOtp(email, otp, newPassword);
+        res.status(200).json({ message: "Password reset successful" });
+    } catch (error) {
+        res.status(500).json({ message: error instanceof Error ? error.message : "Error resetting password" });
     }
 };

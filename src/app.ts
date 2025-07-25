@@ -64,7 +64,8 @@ app.use("/api/categories", authenticateToken,categoryRoutes); // Assuming catego
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api/payments",authenticateToken,paymentRoutes);
 app.use("/api/create-payment-intent",authenticateToken,paymentRoutes);
-
+app.use("/api/auth/send-otp", authRoutes); // Send OTP route
+app.use("/api/auth/reset-password-with-otp", authRoutes); // Reset password with OTP route
 // Add the Cloudinary routes
 app.use("/api/cloudinary", cloudinaryRoutes);
 app.use(express.json());

@@ -41,6 +41,12 @@ const UserModel = new mongoose.Schema(
             type: String,
             enum: ["active", "inactive"], // allowed statuses
             default: "active" // default status
+        },
+        "otp": {
+            type: String
+        },
+        "otpExpiry": {
+            type: Number
         }
     }
 );

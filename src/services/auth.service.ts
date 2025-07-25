@@ -3,7 +3,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { sendEmail } from '../utils/email.util';
-
+import {Request, Response} from "express";
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -202,4 +203,41 @@ export async function getUserById(id: string) {
     }
 }
 
+export const sendOtp = async (email: string): Promise<void> => {
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw new Error("User not found");
+    }
 
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 300000; // 5 minutes
+    await user.save();
+
+
+    // Ensure user.email is defined
+    if (!user.email) {
+        throw new Error("User email is not available");
+    }
+    // Send email
+    await sendEmail(user.email, "Your OTP", `Your OTP is: ${otp}`);
+};
+
+export const resetPasswordWithOtp = async (email: string, otp: string, newPassword: string): Promise<void> => {
+    const user = await User.findOne({ email });
+    if (!user || user.otp !== otp) {
+        throw new Error("Invalid or expired OTP");
+    }
+
+    // Ensure user.otpExpiry is defined and valid
+    if (user.otpExpiry === undefined || user.otpExpiry === null || user.otpExpiry < Date.now()) {
+        throw new Error("Invalid or expired OTP");
+    }
+
+    // Update password
+    user.password = bcrypt.hashSync(newPassword, 10); // Hash the password
+    user.otp = undefined;
+    user.otpExpiry = undefined;
+    await user.save();
+};

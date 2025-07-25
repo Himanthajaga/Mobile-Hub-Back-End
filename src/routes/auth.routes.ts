@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {authenticateUser, registerUser, updateUser, getAllUsers, toggleUserStatus} from "../controller/auth.controller";
+import {authenticateUser, registerUser, updateUser, getAllUsers, toggleUserStatus,sendOtp,resetPasswordWithOtp} from "../controller/auth.controller";
 
 const authRouter: Router = Router();
 
@@ -11,4 +11,6 @@ authRouter.post('/:id/toggle-active', (req, res, next) => {
     console.log("Route hit for toggling user status");
     next();
 }, toggleUserStatus);
+authRouter.post("/send-otp",sendOtp);
+authRouter.post("/reset-password-with-otp", resetPasswordWithOtp); // Assuming resetPasswordWithOtp is also handled here
 export default authRouter;
