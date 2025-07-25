@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import * as productService from '../services/product.service';
+import {sendEmail} from "../utils/email.util";
+import {getAdminEmails} from "../utils/user.util";
 
 export const getAllProducts = async (req:Request, res:Response) => {
 //     ctrl+alt+T to wrap in try catch
@@ -29,6 +31,19 @@ export const saveProduct = async (req: Request, res: Response) => {
 
         // Save the product to the database
         const savedProduct = await productService.saveProduct(product);
+
+
+        // Fetch admin emails
+        const adminEmails = await getAdminEmails();
+
+        // Send email to all admins
+        await sendEmail(
+            adminEmails.join(','), // Join emails with commas
+            "New Product Added",
+            `A new product "${name}" has been added.`,
+            `<p>A new product "<strong>${name}</strong>" has been added with a price of ${price} ${currency}.</p>`
+        );
+
 
         res.status(201).json(savedProduct);
     } catch (error) {
@@ -73,6 +88,18 @@ export const updateProduct = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Product not found." });
         }
 
+        // Fetch admin emails
+        const adminEmails = await getAdminEmails();
+
+        // Send email to all admins
+        await sendEmail(
+            adminEmails.join(','), // Join emails with commas
+            "Product Updated",
+            `The product "${updatedProduct.name}" has been updated.`,
+            `<p>The product "<strong>${updatedProduct.name}</strong>" has been updated with new details.</p>`
+        );
+
+
         res.status(200).json(updatedProduct);
     } catch (error) {
         console.error("Error updating product:", error);
@@ -93,6 +120,18 @@ export const deleteProduct = async (req: Request, res: Response) => {
             res.status(404).json({ error: "Product not found" });
             return;
         }
+
+
+        // Fetch admin emails
+        const adminEmails = await getAdminEmails();
+
+        // Send email to all admins
+        await sendEmail(
+            adminEmails.join(','), // Join emails with commas
+            "Product Deleted",
+            `The product with ID "${productId}" has been deleted.`,
+            `<p>The product with ID "<strong>${productId}</strong>" has been deleted from the inventory.</p>`
+        );
 
         res.status(200).json({ message: "Product deleted successfully" });
     } catch (error) {

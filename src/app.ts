@@ -49,7 +49,14 @@ const corsOptions = {
 app.use(cors(corsOptions)); // Enable/Allow CORS according to defined options
 // Serve static files from the uploads folder
 // app.use("/uploads", express.static("uploads"));
+app.use((req, res, next) => {
+    console.log(`Incoming request: ${req.method} ${req.url}`);
+    next();
+});
 app.use("/api/auth", authRoutes);
+
+app.use("/api/users/", authenticateToken, authRoutes); // Toggle user active status route
+app.use("/api/auth/all", authenticateToken, authRoutes); // Get all users route
 app.use("/api/auth/register", authRoutes); // Register route
 app.use("/api/auth/update", authenticateToken, authRoutes); // Update user route
 app.use("/api/products", authenticateToken, productRoutes);

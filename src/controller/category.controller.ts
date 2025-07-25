@@ -1,5 +1,7 @@
 import * as categoryService from '../services/category.service';
 import { Request, Response } from 'express';
+import {sendEmail} from "../utils/email.util";
+import {getAdminEmails} from "../utils/user.util";
 
 export const getAllCategories = async (req:Request, res:Response) => {
     try {
@@ -27,6 +29,17 @@ export const saveCategory = async (req: Request, res: Response) => {
 
         // Save the category to the database
         const savedCategory = await categoryService.saveCategory(category);
+
+        // Fetch admin emails
+        const adminEmails = await getAdminEmails();
+        // Send email after saving the category
+        await sendEmail(
+            adminEmails.join(','), // Join emails with commas
+            "New Category Added",
+            `A new category "${name}" has been added.`,
+            `<p>A new category "<strong>${name}</strong>" has been added.</p>`
+        );
+
 
         // Respond with the saved category
         res.status(201).json(savedCategory);
@@ -76,6 +89,17 @@ export const updateCategory = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Category not found" });
         }
 
+        // Fetch admin emails
+        const adminEmails = await getAdminEmails();
+        // Send email after saving the category
+        await sendEmail(
+            adminEmails.join(','), // Join emails with commas
+            "Category Updated",
+            `The category "${name}" has been updated.`,
+            `<p>The category "<strong>${name}</strong>" has been updated.</p>`
+        );
+
+
         res.status(200).json(updatedCategory);
     } catch (error) {
         console.error("Error updating category:", error);
@@ -96,6 +120,17 @@ export const deleteCategory = async (req: Request, res: Response) => {
             res.status(404).json({ error: "Category not found" });
             return;
         }
+
+        // Fetch admin emails
+        const adminEmails = await getAdminEmails();
+        // Send email after saving the category
+        await sendEmail(
+            adminEmails.join(','), // Join emails with commas
+            "Category Deleted",
+            `A category with ID "${categoryId}" has been deleted.`,
+            `<p>A category with ID "<strong>${categoryId}</strong>" has been deleted.</p>`
+        );
+
 
         res.status(200).json({ message: "Category deleted successfully" });
     } catch (error) {

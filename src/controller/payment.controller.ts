@@ -3,46 +3,60 @@ import { Request, Response } from 'express';
 import crypto from "crypto";
 import Stripe from "stripe";
 import mongoose from "mongoose";
-
+import { v4 as uuidv4 } from 'uuid';
+import {sendEmail} from "../utils/email.util";
 const stripe = new Stripe("sk_test_51R6ZgFKiBxldEfFSDQhuZZlyZufTUH4ua3pqx4P8XTx746kQN4ufxX4GWZZ8YSehmDhVV6ULYuS9apUtmcdJHhwR00LMZq0lIJ", { apiVersion: "2025-06-30.basil" });
 
 export const createPaymentIntent = async (req: Request, res: Response) => {
     try {
-        console.log("Request received at createPaymentIntent endpoint", req.body);
-        const { amount, currency, paymentId, paymentMethod, status, transactionId, userId, createdAt } = req.body;
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ error: "Invalid User ID format" });
-        }
-        // Validate required fields
-        if (!amount || !currency || !paymentId || !paymentMethod || !status || !transactionId || !userId) {
+        const { amount, currency, paymentMethod, status, userId, createdAt,email } = req.body;
+
+        if (!amount || !currency || !paymentMethod || !status || !userId || !email) {
             return res.status(400).json({ message: "All fields are required" });
         }
 
-        // Create a PaymentIntent with Stripe
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ error: "Invalid User ID format" });
+        }
+
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(amount * 100), // Convert to smallest currency unit
+            amount: Math.round(amount * 100),
             currency,
+            payment_method_types: [paymentMethod],
         });
 
-        // Prepare payment data for saving
+        const charges = await stripe.charges.list({ payment_intent: paymentIntent.id });
+        const paymentId = charges.data.length > 0 ? charges.data[0].id : uuidv4(); // Generate a unique fallback ID
+
         const paymentData = {
             amount,
             currency,
-            paymentId,
             paymentMethod,
             status,
-            transactionId,
-            userId: new mongoose.Types.ObjectId(userId), // Ensure userId is an ObjectId
-            createdAt: createdAt ? new Date(createdAt) : new Date(), // Use provided date or default to now
+            transactionId: paymentIntent.id,
+            paymentId,
+            userId: new mongoose.Types.ObjectId(userId),
+            createdAt: createdAt ? new Date(createdAt) : new Date(),
             paymentIntentId: paymentIntent.id,
+            email // Include user email for confirmation
         };
 
-        // Save payment details to the database
         await paymentService.savePayment(paymentData);
+
+        // Send email after successful payment
+        await sendEmail(
+           email,
+            "Payment Confirmation",
+            `Your payment of ${amount} ${currency} was successful.`,
+            `<p>Dear user,</p><p>Your payment of <strong>${amount} ${currency}</strong> was successful. Thank you for your purchase!</p>`
+        );
+
 
         res.status(200).json({
             message: "Payment saved successfully",
             clientSecret: paymentIntent.client_secret,
+            transactionId: paymentIntent.id,
+            paymentId,
         });
     } catch (error) {
         console.error("Error creating payment intent:", error);
@@ -52,6 +66,7 @@ export const createPaymentIntent = async (req: Request, res: Response) => {
 export const getAllPayments = async (req:Request, res:Response) => {
     try {
         const payments = await paymentService.getAllPayments();
+        console.log("Retrieved payments:", payments);
         res.status(200).json(payments);
     } catch (error) {
         console.error("Error retrieving payments:", error);

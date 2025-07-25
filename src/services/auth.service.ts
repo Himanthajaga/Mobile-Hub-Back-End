@@ -2,6 +2,8 @@ import User from '../model/user.model'  //Adjust the import path as necessary
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { sendEmail } from '../utils/email.util';
+
 
 dotenv.config();
 
@@ -9,7 +11,7 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET as string;
 
 const refreshTokens = new Set<string>();
-export const registerUser = async (username: string, password: string, role: string,email:string,image:string) => {
+export const registerUser = async (username: string, password: string, role: string,email:string,image:string,status:string) => {
     try {
         const existingUser = await User.findOne({ username });
         if (existingUser) {
@@ -17,7 +19,7 @@ export const registerUser = async (username: string, password: string, role: str
         }
 
         const hashedPassword = bcrypt.hashSync(password, 10);
-        const newUser = new User({ username, password: hashedPassword, role, email, image });
+        const newUser = new User({ username, password: hashedPassword, role, email, image ,status});
         await newUser.save();
         return { message: "User registered successfully" };
     } catch (error) {
@@ -26,14 +28,28 @@ export const registerUser = async (username: string, password: string, role: str
 };
 export const authenticateUser = async (username: string, password: string) => {
     try {
-        //data coming from frontend
+        // Log the authentication attempt
         console.log(
             `Authenticating user: ${username}, Password: ${password.length > 0 ? "******" : "empty"}`
-        )
-        const existingUser = await User.findOne({ username }).select("username password role email image");
+        );
+
+        // Include 'status' in the select statement
+        const existingUser = await User.findOne({ username }).select("username password role email image status");
 
         if (!existingUser) {
             throw new Error("User not found");
+        }
+        // Ensure existingUser.email is defined before calling sendEmail
+        if (!existingUser.email) {
+            throw new Error("User email is not available");
+        }
+
+        // Log the retrieved user data
+        console.log("Retrieved user data:", existingUser);
+
+        // Check if the user's status is inactive
+        if (existingUser.status === "inactive") {
+            throw new Error("You cannot log in. Admin has restricted your account.");
         }
 
         const isValidPassword = bcrypt.compareSync(password, existingUser.password);
@@ -54,7 +70,19 @@ export const authenticateUser = async (username: string, password: string) => {
         );
         refreshTokens.add(refreshToken);
 
-        return {
+        // // Send email after successful authentication
+        // // Send email after successful authentication
+        // await sendEmail(
+        //     existingUser.email, // Now guaranteed to be a string
+        //     "Login Notification",
+        //     `Hi ${existingUser.username}, you have successfully logged in.`,
+        //     `<p>Hi <strong>${existingUser.username}</strong>, you have successfully logged in.</p>`
+        // );
+        // console.log(`Login email sent to ${existingUser.email}`);
+        //
+
+        // Log the returned data
+        const response = {
             accessToken,
             refreshToken,
             user: {
@@ -63,8 +91,14 @@ export const authenticateUser = async (username: string, password: string) => {
                 role: existingUser.role,
                 email: existingUser.email,
                 image: existingUser.image,
+                status: existingUser.status
             },
+            message: "User authenticated successfully, please save the refresh token securely"
         };
+        console.log("Authentication response:", response);
+
+        return response;
+
     } catch (error) {
         throw new Error(error instanceof Error ? error.message : "An unknown error occurred");
     }
@@ -76,7 +110,8 @@ export async function updateUser(
     role?: string,
     image?: string,
     oldPassword?: string,
-    newPassword?: string
+    newPassword?: string,
+    status?: string
 ) {
     try {
         console.log("Role received:", role);
@@ -107,7 +142,12 @@ export async function updateUser(
             throw new Error("Invalid role value. Role must be 'admin' or 'customer'.");
         }
         if (image) existingUser.image = image;
-
+if (status) {
+            if (status !== 'active' && status !== 'inactive') {
+                throw new Error("Invalid status value. Status must be 'active' or 'inactive'.");
+            }
+            existingUser.status = status;
+}
         // Save the updated user
         await existingUser.save();
 
@@ -117,8 +157,49 @@ export async function updateUser(
             role: existingUser.role,
             email: existingUser.email,
             image: existingUser.image,
+            status: existingUser.status || 'active' // Default to 'active' if status is not set
         };
     } catch (error) {
         throw new Error(error instanceof Error ? error.message : "An unknown error occurred");
     }
 }
+export async function getAllUsers() {
+    try {
+        const users = await User.find().select("username role email image status").lean(); // Include 'status'
+        return users.map(user => ({
+            userId: user._id,
+            username: user.username,
+            role: user.role,
+            email: user.email,
+            image: user.image,
+            status: user.status // Ensure 'status' is included
+        }));
+    } catch (error) {
+        throw new Error(error instanceof Error ? error.message : "An unknown error occurred");
+    }
+}
+
+export const updateUserStatus = async (id: string, status: string) => {
+    return await User.findByIdAndUpdate(id, { status }, { new: true });
+
+};
+export async function getUserById(id: string) {
+    try {
+        const user = await User.findById(id).select("username role email image status").lean();
+        if (!user) {
+            throw new Error("User not found");
+        }
+        return {
+            userId: user._id,
+            username: user.username,
+            role: user.role,
+            email: user.email,
+            image: user.image,
+            status: user.status
+        };
+    } catch (error) {
+        throw new Error(error instanceof Error ? error.message : "An unknown error occurred");
+    }
+}
+
+

@@ -36,6 +36,11 @@ const UserModel = new mongoose.Schema(
         "image": {
             type: String,
             trim: true // remove extra spaces
+        },
+        "status": {
+            type: String,
+            enum: ["active", "inactive"], // allowed statuses
+            default: "active" // default status
         }
     }
 );
