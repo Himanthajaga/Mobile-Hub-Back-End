@@ -10,6 +10,7 @@ export const getAllContacts = (req: Request, res: Response) => {
     }
 };
 export const saveContact = (req: Request, res: Response) => {
+    console.log('Received contact data:', req.body);
     const contact = req.body;
     const validationError = contactService.validateContact(contact);
     if (validationError) {

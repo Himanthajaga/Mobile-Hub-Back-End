@@ -8,6 +8,7 @@ import path from "path";
 import cloudinaryRoutes from "./routes/cloudinary.routes";
 import paymentRoutes from "./routes/payment.routes";
 import helmet from "helmet";
+import contactRoutes from "./routes/contact.routes";
 // 1. Initialize the express app
 const app: Express = express();
 app.use(
@@ -54,7 +55,7 @@ app.use((req, res, next) => {
     next();
 });
 app.use("/api/auth", authRoutes);
-
+app.use("/api/contact", contactRoutes); // Contact route
 app.use("/api/users/", authenticateToken, authRoutes); // Toggle user active status route
 app.use("/api/auth/all", authenticateToken, authRoutes); // Get all users route
 app.use("/api/auth/register", authRoutes); // Register route

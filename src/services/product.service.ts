@@ -27,6 +27,13 @@ export const getAllProducts = async () => {
 export const saveProduct = async (product: { id: string; name: string; price: number; currency: string; description: string; image: string; category: string }) => {
     try {
         console.log("Saving product:", product);
+
+        // Check if the `id` already exists
+        const existingProduct = await Product.findOne({ id: product.id }).lean();
+        if (existingProduct) {
+            throw new Error(`Product with id "${product.id}" already exists`);
+        }
+
         // Check if the category is a valid ObjectId
         const category = mongoose.isValidObjectId(product.category)
             ? await Category.findById(product.category).lean()
@@ -110,21 +117,19 @@ export const validateProduct = (product: ProductDto): string | null => {
 };
 
 export const generateUniqueId = async (): Promise<string> => {
-    // Find the product with the highest numeric ID
-    const lastProduct = await Product.findOne({})
-        .sort({ id: -1 }) // Sort by ID in descending order
-        .lean();
+    // Find all products and extract numeric parts of IDs
+    const products = await Product.find({ id: { $regex: /^PROD\d+$/ } }).lean();
 
     let lastIdNumber = 0;
 
-    if (lastProduct) {
-        // Check if the ID is numeric or starts with "PROD"
-        const numericPart = lastProduct.id.startsWith("PROD")
-            ? lastProduct.id.replace("PROD", "")
-            : lastProduct.id;
+    if (products.length > 0) {
+        // Extract numeric parts and find the highest number
+        const numericIds = products.map(product => {
+            const numericPart = product.id.replace("PROD", "");
+            return parseInt(numericPart, 10) || 0;
+        });
 
-        // Parse the numeric part safely
-        lastIdNumber = parseInt(numericPart, 10) || 0;
+        lastIdNumber = Math.max(...numericIds);
     }
 
     // Increment the numeric part to generate the new ID
